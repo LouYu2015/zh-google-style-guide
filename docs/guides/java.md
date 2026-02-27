@@ -23,7 +23,7 @@ description: Google Java Style Guide 中文翻译
 
 ### 1.2 指南说明
 
-本文档中的示例代码均为**非规范性**内容。也就是说，这些示例虽符合 Google 风格，但并不代表呈现代码的*唯一*优雅方式。示例中的可选格式选择不应被当作强制规则。
+本文档中的示例代码均为**非规范性**内容。也就是说，这些示例虽符合 Google 风格，但并不代表呈现代码的*唯一*优雅方式。示例中的可选格式不应被当作强制规则。
 
 ---
 
@@ -54,7 +54,7 @@ description: Google Java Style Guide 中文翻译
 
 对于其余的非 ASCII 字符，可以使用实际的 Unicode 字符（如 `∞`），也可以使用等价的 Unicode 转义（如 `\u221e`）。选择哪种方式，仅取决于哪种写法**更易于阅读和理解**，但强烈不建议在字符串字面量和注释之外使用 Unicode 转义。
 
-> **提示：** 使用 Unicode 转义时，偶尔即便直接使用实际的 Unicode 字符，加一条解释性注释也会很有帮助。
+> **提示：** 无论是使用 Unicode 转义，还是偶尔直接使用实际的 Unicode 字符，添加一条解释性注释往往都会有所帮助。
 
 示例：
 
@@ -160,7 +160,7 @@ description: Google Java Style Guide 中文翻译
 
 `if`、`else`、`for`、`do` 和 `while` 语句**必须使用花括号**，即便语句体为空或只有一条语句也不例外。
 
-其他可选花括号（例如 lambda 表达式中的花括号）仍然是可选的。
+其他场合中原本可选的花括号（例如 lambda 表达式中的花括号）不受此规则影响，仍然是可选的。
 
 #### 4.1.2 非空块：K&R 风格 {#s4.1.2-blocks-k-r-style}
 
@@ -207,7 +207,7 @@ return new MyClass() {
 
 #### 4.1.3 空块：可以简写 {#s4.1.3-braces-empty-blocks}
 
-空块或块状结构可以采用 K&R 风格（如第 4.1.2 节所述）。此外，也可以在开括号后立即关闭，中间不插入任何字符或换行（`{}`），**但前提是**该空块不属于*多重块语句*的一部分（即直接包含多个块的语句：`if/else` 或 `try/catch/finally`）。
+空块或块状结构可以采用 K&R 风格（如第 4.1.2 节所述）。此外，也可以在开花括号后立即关闭，中间不插入任何字符或换行（`{}`），**但前提是**该空块不属于*多重块语句*的一部分（即直接包含多个块的语句：`if/else` 或 `try/catch/finally`）。
 
 示例：
 
@@ -322,13 +322,13 @@ switch (x) {
 
 #### 4.6.2 水平空白 {#s4.6.2-horizontal-whitespace}
 
-除语言要求或其他风格规则要求之外，在字面量、注释和 Javadoc 之外，**仅**在以下位置出现一个 ASCII 空格：
+在字面量、注释和 Javadoc 的内部之外，除语言或其他风格规则明确要求的情形外，ASCII 空格**仅**出现在以下位置：
 
 1. 关键字（如 `if`、`for`、`catch`）与其后跟的开圆括号（`(`）之间。
 2. 关键字（如 `else`、`catch`）与其前面的闭花括号（`}`）之间。
 3. 所有开花括号（`{`）之前，但有两种例外：
     - `@SomeAnnotation({a, b})`（不加空格）
-    - `String[][] x = {{"foo"}};`（根据下方第 10 条规则，`{{` 之间不需要空格）
+    - `String[][] x = {{"foo"}};`（根据下方第 8 条规则，`{{` 之间不需要空格）
 4. 所有二元或三元运算符的两侧。以下"类运算符"符号同样适用此规则：
     - 分隔多个类型界限的 `&`：`<T extends Foo & Bar>`
     - 处理多个异常的 `catch` 块中的管道符：`catch (FooException | BarException e)`
@@ -562,7 +562,7 @@ public String getNameIfPresent() { ... }
 
 本节讨论*实现注释*。Javadoc 见第 7 节，[Javadoc](#s7-javadoc)。
 
-任何换行前都可以有任意空白，后跟一条实现注释。这样的注释使该行非空。
+在任意换行符之前，都可以添加任意空白字符，再跟一条实现注释，从而使该行成为非空行。
 
 ##### 4.8.6.1 块注释风格 {#s4.8.6.1-block-comment-style}
 
@@ -712,7 +712,7 @@ static final String[] nonEmptyArray = {"these", "can", "change"};
 
 ### 5.3 驼峰命名法的定义 {#s5.3-camel-case}
 
-有时，将一个英文短语转换为驼峰命名法有不止一种合理的方式，例如当出现缩略词或"IPv6""iOS"这样特殊结构时。为了提高可预测性，Google 风格规定了以下（近乎确定性的）转换方案。
+有时，将一个英文短语转换为驼峰命名法有不止一种合理的方式，例如当出现缩略词或"IPv6""iOS"这样特殊结构时。为了提高可预测性，Google 风格规定了以下（近乎确定的）转换方案。
 
 从名称的自然语言形式开始：
 
@@ -748,7 +748,7 @@ static final String[] nonEmptyArray = {"these", "can", "change"};
 
 ### 6.1 `@Override`：始终使用 {#s6.1-override-annotation}
 
-凡是合法的地方，都应在方法上标注 `@Override` 注解。这包括：子类方法重写父类方法、类方法实现接口方法、接口方法重新指定父接口方法，以及记录组件（record component）的显式声明访问器方法。
+凡是合法的地方，都应在方法上标注 `@Override` 注解。这包括：子类方法重写父类方法、类方法实现接口方法、接口方法重新声明父接口中的方法，以及记录组件（record component）的显式声明访问器方法。
 
 **例外：** 当父类方法标注了 `@Deprecated` 时，可以省略 `@Override`。
 
@@ -781,7 +781,7 @@ somethingThatYieldsAFoo().aStaticMethod(); // 非常不好
 
 ### 6.4 Finalizer：不使用 {#s6.4-finalizers}
 
-不要重写 `Object.finalize`。终结（Finalization）支持已[计划移除](https://openjdk.org/jeps/421)。
+不要重写 `Object.finalize`。Java 的终结机制（Finalization）已[计划移除](https://openjdk.org/jeps/421)。
 
 ---
 
@@ -811,7 +811,7 @@ public int method(String p1) { ... }
 
 #### 7.1.2 段落 {#s7.1.2-javadoc-paragraphs}
 
-各段之间——即各个只含有对齐的前导星号（`*`）的行——用一个空行分隔，块标签组之前也有一个空行。除第一段外，每段的第一个单词前紧接 `<p>` 标签，`<p>` 后不加空格。其他块级 HTML 元素（如 `<ul>` 或 `<table>`）前*不*加 `<p>`。
+各段之间——即各个仅含对齐前导星号（`*`）的空白行——用一个空行分隔，块标签组之前也有一个空行。除第一段外，每段的第一个单词前紧接 `<p>` 标签，`<p>` 后不加空格。其他块级 HTML 元素（如 `<ul>` 或 `<table>`）前*不*加 `<p>`。
 
 #### 7.1.3 块标签 {#s7.1.3-javadoc-block-tags}
 
@@ -821,13 +821,13 @@ public int method(String p1) { ... }
 
 每个 Javadoc 块都以一段简短的**摘要片段**开头。这个片段非常重要：在类和方法索引等特定上下文中，它是唯一会显示的文本内容。
 
-这是一个片段——名词短语或动词短语，而非完整句子。它**不**以 `A {@code Foo} is a…` 或 `This method returns…` 开头，也不构成 `Save the record.` 这样完整的祈使句。但这个片段的首字母应大写，标点应像完整句子一样。
+这是一个片段——名词短语或动词短语，而非完整句子。它**不**以 `A {@code Foo} is a…` 或 `This method returns…` 开头，也不构成 `Save the record.` 这样完整的祈使句。但这个片段的首字母应大写，并像完整句子一样使用标点符号。
 
 > **提示：** 常见错误是将简单的 Javadoc 写成 `/** @return the customer ID */` 这种形式。这是不正确的，应改为 `/** Returns the customer ID. */` 或 `/** {@return the customer ID} */`。
 
 ### 7.3 Javadoc 的使用范围 {#s7.3-javadoc-where-required}
 
-至少，每个*可见的*类、成员或记录组件都需要有 Javadoc，但以下例外情况除外。顶层类若为 `public`，则是可见的；成员若为 `public` 或 `protected`，且其所在类可见，则该成员是可见的；记录组件若其所在记录类可见，则该组件是可见的。
+至少，每个*可见的*类、成员或记录组件都需要有 Javadoc，但有以下例外。顶层类若为 `public`，则是可见的；成员若为 `public` 或 `protected`，且其所在类可见，则该成员是可见的；记录组件若其所在记录类可见，则该组件是可见的。
 
 如第 7.3.4 节[非必需 Javadoc](#s7.3.4-javadoc-non-required) 所述，也可以根据需要编写额外的 Javadoc 内容。
 
