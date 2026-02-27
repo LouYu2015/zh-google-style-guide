@@ -1,0 +1,97 @@
+site_name: Google 风格指南（中文翻译）
+site_description: Google Style Guide 官方指南的中文翻译，由 AI 辅助翻译并人工审校
+site_author: Tom Lou
+site_url: https://louyu.github.io/ai-translated-google-styleguide/
+repo_name: louyu/ai-translated-google-styleguide
+repo_url: https://github.com/louyu/ai-translated-google-styleguide
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: zh
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: 切换到深色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: 切换到亮色模式
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+    - toc.follow
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/translate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+      title: 本页目录
+
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+  - minify:
+      minify_html: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/louyu/ai-translated-google-styleguide
+      name: GitHub 仓库
+  generator: false
+
+nav:
+  - 首页: index.md
+  - 翻译指南:
+    - C++ 风格指南: guides/cpp.md
+    - Python 风格指南: guides/python.md
+    - JavaScript 风格指南: guides/javascript.md
+    - Java 风格指南: guides/java.md
+    - TypeScript 风格指南: guides/typescript.md
+    - Go 风格指南: guides/go.md
+    - Shell 风格指南: guides/shell.md
+    - HTML/CSS 风格指南: guides/html-css.md
+  - 关于: about.md
