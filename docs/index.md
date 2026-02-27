@@ -25,7 +25,7 @@ description: Google Style Guide 官方指南的中文翻译
 ## 原始仓库
 
 - 官方仓库：[google/styleguide](https://github.com/google/styleguide)
-- 本翻译仓库：[louyu/ai-translated-google-styleguide](https://github.com/louyu/ai-translated-google-styleguide)
+- 本翻译仓库：[LouYu2015/zh-google-style-guide](https://github.com/LouYu2015/zh-google-style-guide)
 
 !!! warning "版权声明"
     Google Style Guide 原始内容版权归 Google LLC 所有，

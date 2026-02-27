@@ -1,9 +1,9 @@
 site_name: Google 风格指南（中文翻译）
 site_description: Google Style Guide 官方指南的中文翻译，由 AI 辅助翻译并人工审校
 site_author: Tom Lou
-site_url: https://louyu.github.io/ai-translated-google-styleguide/
-repo_name: louyu/ai-translated-google-styleguide
-repo_url: https://github.com/louyu/ai-translated-google-styleguide
+site_url: https://LouYu2015.github.io/zh-google-style-guide/
+repo_name: LouYu2015/zh-google-style-guide
+repo_url: https://github.com/LouYu2015/zh-google-style-guide
 edit_uri: edit/main/docs/
 
 theme:
@@ -79,7 +79,7 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/louyu/ai-translated-google-styleguide
+      link: https://github.com/LouYu2015/zh-google-style-guide
       name: GitHub 仓库
   generator: false
 

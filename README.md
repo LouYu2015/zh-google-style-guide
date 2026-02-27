@@ -1,18 +1,18 @@
 # Google 风格指南（中文翻译）
 
-[![Deploy MkDocs](https://github.com/louyu/ai-translated-google-styleguide/actions/workflows/deploy.yml/badge.svg)](https://github.com/louyu/ai-translated-google-styleguide/actions/workflows/deploy.yml)
+[![Deploy MkDocs](https://github.com/LouYu2015/zh-google-style-guide/actions/workflows/deploy.yml/badge.svg)](https://github.com/LouYu2015/zh-google-style-guide/actions/workflows/deploy.yml)
 [![License: CC BY 3.0](https://img.shields.io/badge/License-CC%20BY%203.0-blue.svg)](https://creativecommons.org/licenses/by/3.0/)
 
 [Google Style Guide](https://github.com/google/styleguide) 的中文翻译，由 AI 辅助翻译 + 人工审校。
 
-**在线阅读：** https://louyu.github.io/ai-translated-google-styleguide/
+**在线阅读：** https://LouYu2015.github.io/zh-google-style-guide/
 
 ## 本地开发
 
 ```bash
 # 克隆仓库（含 submodule）
-git clone --recurse-submodules https://github.com/louyu/ai-translated-google-styleguide.git
-cd ai-translated-google-styleguide
+git clone --recurse-submodules https://github.com/LouYu2015/zh-google-style-guide.git
+cd zh-google-style-guide
 
 # 创建并激活虚拟环境
 python3 -m venv .venv
