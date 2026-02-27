@@ -47,6 +47,7 @@ theme:
     logo: material/translate
 
 markdown_extensions:
+  - attr_list
   - admonition
   - pymdownx.details
   - pymdownx.superfences
