@@ -3,3 +3,9 @@
 
 # MkDocs build output
 site/
+
+# API keys and secrets
+scripts/proofreader/.api_key
+
+debug/
+*.pyc
