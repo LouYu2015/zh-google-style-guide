@@ -89,6 +89,10 @@ def _extract_from_html(content: str, section_num: str) -> tuple[str, str] | tupl
     if len(matches) >= 2:
         fragment = fragment[: matches[1].start()]
 
+    # Strip standalone <a> anchor tags (used for legacy in-doc navigation in HTML).
+    # They are meaningless in markdown and cause Claude to reproduce them in corrections.
+    fragment = re.sub(r"<a\b[^>]*>\s*</a>", "", fragment)
+
     return fragment.strip(), target_title
 
 
@@ -341,7 +345,12 @@ def apply_correction(guide: str, section_num: str, corrected_content: str) -> bo
     # Build the replacement: ensure it ends with exactly one newline
     new_section = corrected_content.rstrip("\n") + "\n"
 
+    # Ensure blank line before the section heading
+    prefix: list[str] = []
+    if target_line > 0 and lines[target_line - 1].strip() != "":
+        prefix = ["\n"]
+
     # Reassemble file
-    new_lines = lines[:target_line] + [new_section] + lines[end_line:]
+    new_lines = lines[:target_line] + prefix + [new_section] + lines[end_line:]
     translation_path.write_text("".join(new_lines), encoding="utf-8")
     return True

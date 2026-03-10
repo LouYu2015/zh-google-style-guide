@@ -20,17 +20,21 @@ description: Google Java Style Guide 中文翻译
 3. *注释*（comment）一词始终指*实现注释*。本文档不使用"文档注释"这一说法，而统一使用通用术语"Javadoc"。
 
 本文档中偶尔还会出现其他"术语说明"。
+
 ### 1.2 指南说明
 
 本文档中的示例代码均为**非规范性**内容。也就是说，这些示例虽符合 Google 风格，但并不代表呈现代码的*唯一*符合风格规范的方式。示例中可选的格式选择不应被当作强制规则。
+
 ## 2 源文件基础
 
 ### 2.1 文件名
 
 对于含有类的源文件，文件名由顶层类名（[只能有一个](#s3.4.1-one-top-level-class)）加上 `.java` 扩展名组成，且大小写需与类名完全一致。
+
 ### 2.2 文件编码：UTF-8
 
 源文件采用 **UTF-8** 编码。
+
 ### 2.3 特殊字符
 
 #### 2.3.1 空白字符
@@ -39,9 +43,11 @@ description: Google Java Style Guide 中文翻译
 
 1. 在 `char`、字符串字面量以及文本块中，其他所有空白字符均需转义。
 2. **禁止**使用制表符（Tab）进行缩进。
+
 #### 2.3.2 特殊转义序列
 
 对于具有[特殊转义序列](http://docs.oracle.com/javase/tutorial/java/data/characters.html)的字符（`\b`、`\t`、`\n`、`\f`、`\r`、`\s`、`\"`、`\'` 和 `\\`），应直接使用对应的转义序列，而不是使用八进制（如 `\012`）或 Unicode 转义（如 `\u000a`）。
+
 #### 2.3.3 非 ASCII 字符
 
 对于其余的非 ASCII 字符，可以使用实际的 Unicode 字符（如 `∞`），也可以使用等价的 Unicode 转义（如 `\u221e`）。选择仅取决于哪种写法**更易于阅读和理解**，但强烈不建议在字符串字面量和注释之外使用 Unicode 转义。
@@ -59,6 +65,7 @@ description: Google Java Style Guide 中文翻译
 | `return '\ufeff' + content; // 字节顺序标记` | 好：对不可打印字符使用转义，必要时加注释。 |
 
 > **提示：** 不要因为担心某些程序无法正确处理非 ASCII 字符，就降低代码的可读性。如果确实出现了问题，那是那些程序的**错误**，应该去**修复**它们。
+
 ## 3 源文件结构 {#s3-source-file-structure}
 
 一个普通的源文件**按顺序**包含以下各节：
@@ -77,17 +84,21 @@ description: Google Java Style Guide 中文翻译
 ### 3.1 许可证或版权信息（如有）
 
 如果文件中包含许可证或版权信息，应放在此处。
+
 ### 3.2 `package` 声明 {#s3.2-package-declaration}
 
 `package` 声明**不换行**。列宽限制（第 4.4 节，[列宽限制：100](#s4.4-column-limit)）不适用于 `package` 声明。
+
 ### 3.3 `import` 语句 {#s3.3-import-statements}
 
 #### 3.3.1 禁止使用通配符导入
 
 **通配符导入**（即"按需导入"，无论是静态的还是非静态的），**一律禁止使用**。
+
 #### 3.3.2 禁止换行
 
 `import` 语句**不换行**。列宽限制（第 4.4 节，[列宽限制：100](#s4.4-column-limit)）不适用于 `import` 语句。
+
 #### 3.3.3 排序与间距
 
 `import` 语句按以下顺序排列：
@@ -98,14 +109,17 @@ description: Google Java Style Guide 中文翻译
 如果同时存在静态导入和非静态导入，则两组之间用一个空行分隔。其他 `import` 语句之间没有空行。
 
 每组内，导入的名称按 ASCII 码顺序排列。（**注意：** 这不是按照 `import` *行* 本身的 ASCII 码排序，因为 `.` 的 ASCII 码小于 `;`。）
+
 #### 3.3.4 禁止对类使用静态导入
 
 禁止对静态嵌套类使用静态导入，应使用普通导入语句导入。
+
 ### 3.4 类声明
 
 #### 3.4.1 有且仅有一个顶层类声明 {#s3.4.1-one-top-level-class}
 
 每个顶层类独占一个源文件。
+
 #### 3.4.2 类内容的排序
 
 类的成员和初始化器的排列顺序对代码的可读性影响重大。然而，排列方式没有正确答案，不同的类可以采用不同的顺序。
@@ -115,6 +129,7 @@ description: Google Java Style Guide 中文翻译
 ##### 3.4.2.1 重载：不拆散
 
 同名方法必须紧挨着排列，中间不插入其他成员。多个构造器也适用同样的规则。即使方法或构造器的修饰符（如 `static` 或 `private`）有所不同，此规则依然适用。
+
 ### 3.5 模块声明
 
 #### 3.5.1 模块指令的排序与间距
@@ -128,6 +143,7 @@ description: Google Java Style Guide 中文翻译
 5. 所有 `provides` 指令放在一块。
 
 相邻指令块之间以一个空行分隔。
+
 ## 4 格式化
 
 > **术语说明：** *块状结构*（block-like construct）是指类、方法、构造器或 `switch` 的主体。根据第 4.8.3.1 节关于[数组初始化器](#s4.8.3.1-array-initializers)的规定，任何数组初始化器都*可以*视为块状结构。
@@ -139,6 +155,7 @@ description: Google Java Style Guide 中文翻译
 `if`、`else`、`for`、`do` 和 `while` 语句必须使用花括号，即便语句体为空或只有一条语句也不例外。
 
 其他场合中原本可选的花括号（例如 lambda 表达式中的花括号）不受此规则影响，仍然是可选的。
+
 #### 4.1.2 非空块：K&R 风格 {#s4.1.2-blocks-k-r-style}
 
 对于*非空*块和块状结构，花括号遵循 Kernighan & Ritchie 风格：
@@ -181,6 +198,7 @@ return new MyClass() {
 ```
 
 枚举类的一些例外情况见第 4.8.1 节，[枚举类](#s4.8.1-enum-classes)。
+
 #### 4.1.3 空块：可以简写 {#s4.1.3-braces-empty-blocks}
 
 空块或块状结构可以采用 K&R 风格（如第 4.1.2 节所述）。此外，也可以在开花括号后立即关闭，中间不插入任何字符或换行（`{}`），**但前提是**该空块不属于*多重块语句*的一部分（即直接包含多个块的语句：`if/else` 或 `try/catch/finally`）。
@@ -202,12 +220,15 @@ try {
   doSomething();
 } catch (Exception e) {}
 ```
+
 ### 4.2 块缩进：+2 个空格 {#s4.2-block-indentation}
 
 每打开一个新的块或块状结构，缩进增加两个空格。块结束时，缩进恢复到上一层级。缩进级别同时适用于块内的代码和注释。（参见第 4.1.2 节，[非空块：K&R 风格](#s4.1.2-blocks-k-r-style)中的示例。）
+
 ### 4.3 每行只写一条语句 {#s4.3-one-statement-per-line}
 
 每条语句后都要换行。
+
 ### 4.4 列宽限制：100 {#s4.4-column-limit}
 
 Java 代码的列宽限制为 100 个字符。"字符"是指任意一个 Unicode 码位。除以下情况外，所有超出此限制的行都必须折行，具体规则见第 4.5 节，[折行](#s4.5-line-wrapping)。
@@ -221,6 +242,7 @@ Java 代码的列宽限制为 100 个字符。"字符"是指任意一个 Unicode
 3. [文本块](#s4.8.9-text-blocks)中的内容。
 4. 注释中可能被复制粘贴到 shell 中执行的命令行。
 5. 极少数情况下需要使用非常长的标识符时，允许超出列宽限制。此时，周围代码的合理折行方式以 [google-java-format](https://github.com/google/google-java-format) 的输出为准。
+
 ### 4.5 折行 {#s4.5-line-wrapping}
 
 > **术语说明：** 将原本可以写在一行的代码分成多行，称为*折行*（line-wrapping）。
@@ -267,6 +289,7 @@ switch (x) {
 ```
 
 > **注意：** 折行的首要目标是使代码清晰易读，而*不一定*是尽可能压缩行数。
+
 #### 4.5.2 续行缩进：至少 +4 个空格 {#s4.5.2-line-wrapping-indent}
 
 折行后，第一行之后的每一行（即*续行*）相对于原始行至少缩进 +4 个空格。
@@ -274,6 +297,7 @@ switch (x) {
 当有多条续行时，缩进量可以根据需要在 +4 的基础上进一步增加。一般来说，当且仅当两条续行以语法上并列的元素开头时，它们使用相同的缩进级别。
 
 关于使用可变数量空格来对齐特定符号这一不推荐做法，详见第 4.6.3 节，[水平对齐](#s4.6.3-horizontal-alignment)。
+
 ### 4.6 空白
 
 #### 4.6.1 垂直空白（空行）{#s4.6.1-vertical-whitespace}
@@ -289,6 +313,7 @@ switch (x) {
 此外，在任何有助于提高可读性的地方，也可以加入一个空行，例如在语句之间加入空行以将代码划分为若干逻辑小节。不鼓励也不反对在类的第一个成员或初始化器之前、或最后一个成员或初始化器之后添加空行。
 
 *多个*连续空行是允许的，但从不要求（也不鼓励）。
+
 #### 4.6.2 水平空白 {#s4.6.2-horizontal-whitespace}
 
 在字面量、注释和 Javadoc 的内部之外，除语言或其他风格规则明确要求的情形外，ASCII 空格**仅**出现在以下位置：
@@ -315,6 +340,7 @@ switch (x) {
 10. 类型注解与 `[]` 或 `...` 之间。
 
 本规则不要求也不禁止行首或行尾的额外空格，只规定行*内部*的空格。
+
 #### 4.6.3 水平对齐：不作要求 {#s4.6.3-horizontal-alignment}
 
 > **术语说明：** *水平对齐*是指在代码中添加可变数量的额外空格，使某些符号恰好对齐到上一行中特定符号的正下方。
@@ -332,9 +358,11 @@ private Color color;  // 可能会破坏对齐
 ```
 
 > **提示：** 对齐有助于提高可读性，但为了维持对齐而刻意为之，会给将来埋下隐患。假设某次修改只涉及一行，如果该修改破坏了原有的对齐，就**不应**仅仅为了重新对齐而去改动附近无关的行。对无需修改的行引入格式化变更，会污染版本历史、拖慢代码审查速度，并加剧合并冲突。这些实际问题的优先级高于对齐本身。
+
 ### 4.7 分组括号：推荐使用 {#s4.7-grouping-parentheses}
 
 只有当作者和审查者都认为省略括号不会引起误解、也不会影响可读性时，才可以省略可选的分组括号。*不*能假设每位读者都将整个 Java 运算符优先级表烂熟于心。
+
 ### 4.8 特定结构 {#s4.8-specific-constructs}
 
 #### 4.8.1 枚举类 {#s4.8.1-enum-classes}
@@ -361,6 +389,7 @@ private enum Suit { CLUBS, HEARTS, SPADES, DIAMONDS }
 ```
 
 由于枚举类*就是*类，所有关于类格式化的规则均适用。
+
 #### 4.8.2 变量声明 {#s4.8.2-variable-declarations}
 
 ##### 4.8.2.1 每次只声明一个变量 {#s4.8.2.1-variables-per-declaration}
@@ -368,9 +397,11 @@ private enum Suit { CLUBS, HEARTS, SPADES, DIAMONDS }
 每条变量声明（字段或局部变量）只声明一个变量：不使用 `int a, b;` 这样的声明方式。
 
 **例外：** `for` 循环头部允许使用多个变量声明。
+
 ##### 4.8.2.2 按需声明，就近声明 {#s4.8.2.2-variables-limited-scope}
 
 局部变量**不应**在包含它们的块或块状结构的开头就统一声明。应将局部变量的声明尽量靠近其首次使用的位置（在合理范围内），以缩小其作用域。局部变量声明时通常带有初始化器，或在声明后立即初始化。
+
 #### 4.8.3 数组 {#s4.8.3-arrays}
 
 ##### 4.8.3.1 数组初始化器：可以写成块状形式 {#s4.8.3.1-array-initializers}
@@ -388,9 +419,11 @@ new int[] {             3,
 }                     new int[]
                           {0, 1, 2, 3}
 ```
+
 ##### 4.8.3.2 不使用 C 风格的数组声明 {#s4.8.3.2-array-declarations}
 
 方括号是*类型*的一部分，而不是变量的一部分：应写 `String[] args`，而不是 `String args[]`。
+
 #### 4.8.4 `switch` 语句与表达式 {#s4.8.4-switch}
 
 由于历史原因，Java 语言对 `switch` 有两种截然不同的语法，我们分别称之为*旧式风格*和*新式风格*。新式 switch 在 switch 标签后使用箭头（`->`），而旧式 switch 使用冒号（`:`）。
@@ -417,7 +450,7 @@ switch (number) {
 
 在旧式 switch 中，每个 switch 标签的冒号后需要换行，语句组内的语句再缩进 +2。
 
-<a id="fallthrough"></a>
+
 ##### 4.8.4.2 贯穿（fall-through）：需加注释 {#s4.8.4.2-switch-fall-through}
 
 在旧式 switch 块中，每个语句组要么异常终止（以 `break`、`continue`、`return` 或抛出异常结束），要么加上注释表明执行会（或*可能会*）继续到下一个语句组。任何能传达贯穿意图的注释均可（通常写 `// fall through`）。switch 块的最后一个语句组不需要加此注释。示例：
@@ -439,9 +472,11 @@ switch (input) {
 注意，`case 1:` 之后不需要注释，只需在语句组末尾加注释即可。
 
 新式 switch 中不存在贯穿问题。
+
 ##### 4.8.4.3 穷举性与 `default` 标签 {#s4.8.4.3-switch-default}
 
 Java 语言要求 switch 表达式以及多种 switch 语句必须是*穷举的*，即所有可能的值都能被某个 switch 标签匹配。具有 `default` 标签的 switch 是穷举的；对于枚举类型，若每个枚举值都有对应的 switch 标签，也满足穷举要求。Google 风格要求*每个* switch 都是穷举的，即便语言本身不作要求。这可能需要添加 `default` 标签，即使其中没有任何代码。
+
 ##### 4.8.4.4 switch 表达式 {#s4.8.4.4-switch-expressions}
 
 switch 表达式必须使用新式风格：
@@ -454,7 +489,7 @@ switch 表达式必须使用新式风格：
   };
 ```
 
-<a id="annotations"></a>
+
 #### 4.8.5 注解 {#s4.8.5-annotations}
 
 ##### 4.8.5.1 类型使用注解 {#s4.8.5.1-type-use-annotation-style}
@@ -466,6 +501,7 @@ final @Nullable String name;
 
 public @Nullable Person getPersonByName(String name);
 ```
+
 ##### 4.8.5.2 类、包和模块注解 {#s4.8.5.2-class-annotation-style}
 
 应用于类、包或模块声明的注解紧跟在文档块之后，每个注解各占一行（即每行一个注解）。这些换行不构成折行（第 4.5 节，[折行](#s4.5-line-wrapping)），因此缩进级别不增加。示例：
@@ -490,6 +526,7 @@ package com.example.frozzler;
 @SuppressWarnings("CheckReturnValue")
 module com.example.frozzler { ... }
 ```
+
 ##### 4.8.5.3 方法和构造器注解 {#s4.8.5.3-method-annotation-style}
 
 方法和构造器声明上的注解规则与[上一节](#s4.8.5.2-class-annotation-style)相同。示例：
@@ -505,6 +542,7 @@ public String getNameIfPresent() { ... }
 ```java
 @Override public int hashCode() { ... }
 ```
+
 ##### 4.8.5.4 字段注解 {#s4.8.5.4-field-annotation-style}
 
 应用于字段的注解同样紧跟在文档块之后，但此时*多个*注解（可能带有参数）可以写在同一行，例如：
@@ -512,11 +550,12 @@ public String getNameIfPresent() { ... }
 ```java
 @Partial @Mock DataLoader loader;
 ```
+
 ##### 4.8.5.5 参数和局部变量注解 {#s4.8.5.5-local-parameter-annotation-style}
 
 对于参数或局部变量上的注解，没有特殊的格式规则（当然，类型使用注解除外）。
 
-<a id="comments"></a>
+
 #### 4.8.6 注释 {#s4.8.6-comments}
 
 本节讨论*实现注释*。Javadoc 见第 7 节，[Javadoc](#s7-javadoc)。
@@ -538,8 +577,8 @@ public String getNameIfPresent() { ... }
 
 > **提示：** 在编写多行注释时，如果希望自动代码格式化工具能够在必要时重新折行（段落风格），请使用 `/* ... */` 风格。大多数格式化工具不会重新折行 `// ...` 风格的注释块。
 
-<a id="todo"></a>
-<a id="todo"></a>
+
+
 
 ##### 4.8.6.2 TODO 注释 {#s4.8.6.2-todo-comments}
 
@@ -561,8 +600,8 @@ public String getNameIfPresent() { ... }
 
 如果 TODO 是"在未来某个时间做某事"这种形式，务必包含非常具体的日期（如"Fix by November 2005"）或非常具体的事件（如"Remove this code when all clients can handle XML responses."）。
 
-<a id="modifiers"></a>
-<a id="modifiers"></a>
+
+
 
 #### 4.8.7 修饰符 {#s4.8.7-modifiers}
 
@@ -578,16 +617,18 @@ public protected private abstract default static final sealed non-sealed
 ```
 transitive static
 ```
+
 #### 4.8.8 数值字面量 {#s4.8.8-numeric-literals}
 
 `long` 类型整数字面量使用大写 `L` 后缀，而不是小写（以避免与数字 `1` 混淆）。例如，应写 `3000000000L` 而不是 `3000000000l`。
+
 #### 4.8.9 文本块 {#s4.8.9-text-blocks}
 
 文本块的开始 `"""` 必须另起一行。这一行可以遵循与其他结构相同的缩进规则，也可以完全不缩进（即从最左侧开始）。结束 `"""` 另起一行，缩进与开始 `"""` 相同，且其后可以在同一行继续编写代码。文本块中每一行的缩进至少与开始和结束的 `"""` 相同。（如果某行缩进更多，则文本块所定义的字符串字面量中，该行开头会有对应数量的空格。）
 
 文本块的内容可以超过[列宽限制](#columnlimit)。
 
-<a id="naming"></a>
+
 ## 5 命名 {#s5-naming}
 
 ### 5.1 所有标识符通用规则 {#s5.1-identifier-names}
@@ -595,11 +636,13 @@ transitive static
 标识符只使用 ASCII 字母和数字，以及在下文少数特别说明的情况下使用下划线。因此，每个合法的标识符名称都能被正则表达式 `\w+` 匹配。
 
 Google 风格**不使用**特殊的前缀或后缀。例如，以下命名不符合 Google 风格：`name_`、`mName`、`s_name`、`kName`。
+
 ### 5.2 各类标识符的命名规则 {#s5.2-specific-identifier-names}
 
 #### 5.2.1 包名和模块名 {#s5.2.1-package-names}
 
 包名和模块名只使用小写字母和数字（不使用下划线），各单词直接拼接。例如，应写 `com.example.deepspace`，而不是 `com.example.deepSpace` 或 `com.example.deep_space`。
+
 #### 5.2.2 类名 {#s5.2.2-class-names}
 
 类名使用 [**大驼峰命名法**（UpperCamelCase）](#s5.3-camel-case)。
@@ -609,6 +652,7 @@ Google 风格**不使用**特殊的前缀或后缀。例如，以下命名不符
 注解类型的命名没有特定规则，也没有公认的惯例。
 
 *测试*类的名称以 `Test` 结尾，例如 `HashIntegrationTest`。如果它只覆盖单个类，则命名为该类名加上 `Test`，例如 `HashImplTest`。
+
 #### 5.2.3 方法名 {#s5.2.3-method-names}
 
 方法名使用[**小驼峰命名法**（lowerCamelCase）](#s5.3-camel-case)。
@@ -617,8 +661,8 @@ Google 风格**不使用**特殊的前缀或后缀。例如，以下命名不符
 
 JUnit *测试*方法名可以用下划线分隔逻辑组成部分，每个部分各自采用小驼峰命名法，例如 `transferMoney_deductsFromSource`。测试方法命名没有唯一正确的方式。
 
-<a id="constants"></a>
-<a id="constants"></a>
+
+
 #### 5.2.4 常量名 {#s5.2.4-constant-names}
 
 常量名使用 `UPPER_SNAKE_CASE`：全大写字母，单词之间用下划线分隔。那么，究竟什么是常量呢？
@@ -645,21 +689,25 @@ static final String[] nonEmptyArray = {"these", "can", "change"};
 ```
 
 常量名通常是名词或名词短语。
+
 #### 5.2.5 非常量字段名 {#s5.2.5-non-constant-field-names}
 
 非常量字段名（无论是否静态）使用[小驼峰命名法](#s5.3-camel-case)。
 
 这些名称通常是名词或名词短语，例如 `computedValues` 或 `index`。
+
 #### 5.2.6 参数名 {#s5.2.6-parameter-names}
 
 参数名使用[小驼峰命名法](#s5.3-camel-case)。
 
 应避免在公共方法中使用单字符参数名。
+
 #### 5.2.7 局部变量名 {#s5.2.7-local-variable-names}
 
 局部变量名使用[小驼峰命名法](#s5.3-camel-case)。
 
 即便局部变量是 final 且不可变的，也不视为常量，不应按常量风格命名。
+
 #### 5.2.8 类型变量名 {#s5.2.8-type-variable-names}
 
 类型变量的命名方式有两种：
@@ -667,10 +715,10 @@ static final String[] nonEmptyArray = {"these", "can", "change"};
 - 单个大写字母，后面可选跟一个数字（如 `E`、`T`、`X`、`T2`）。
 - 类名形式（见第 5.2.2 节，[类名](#s5.2.2-class-names)），后面加大写字母 `T`（例如 `RequestT`、`FooBarT`）。
 
-<a id="acronyms"></a>
-<a id="camelcase"></a>
-<a id="acronyms"></a>
-<a id="camelcase"></a>
+
+
+
+
 
 ### 5.3 驼峰命名法的定义 {#s5.3-camel-case}
 
@@ -703,6 +751,7 @@ static final String[] nonEmptyArray = {"these", "can", "change"};
 \*可以接受，但不推荐。
 
 > **注意：** 英语中有些词的连字符用法存在分歧：例如"nonempty"和"non-empty"都是正确的，因此方法名 `checkNonempty` 和 `checkNonEmpty` 同样都是正确的。
+
 ## 6 编程实践 {#s6-programming-practices}
 
 ### 6.1 `@Override`：始终使用 {#s6.1-override-annotation}
@@ -710,7 +759,7 @@ static final String[] nonEmptyArray = {"these", "can", "change"};
 凡是合法的地方，都应在方法上标注 `@Override` 注解。这包括：子类方法重写父类方法、类方法实现接口方法、接口方法重新声明父接口中的方法，以及为记录类组件（record component）显式声明的访问器方法。
 
 **例外：** 当父类方法标注了 `@Deprecated` 时，可以省略 `@Override`。
-<a id="caughtexceptions"></a>
+
 ### 6.2 捕获的异常：不忽略 {#s6.2-caught-exceptions}
 
 对捕获到的异常不作任何处理，几乎在任何情况下都是错误的做法。（常见的处理方式包括：记录日志，或者在确信该异常"不可能发生"时，将其作为 `AssertionError` 重新抛出。）
@@ -726,6 +775,7 @@ try {
 }
 return handleTextResponse(response);
 ```
+
 ### 6.3 静态成员：通过类名限定 {#s6.3-static-members}
 
 在引用静态类成员时，必须通过类名来限定，而不是通过该类的引用或表达式。
@@ -736,11 +786,11 @@ Foo.aStaticMethod(); // 好
 aFoo.aStaticMethod(); // 不好
 somethingThatYieldsAFoo().aStaticMethod(); // 非常不好
 ```
-<a id="finalizers"></a>
+
 ### 6.4 Finalizer：不使用 {#s6.4-finalizers}
 
 不要重写 `Object.finalize`。Java 的终结机制（Finalization）已[计划移除](https://openjdk.org/jeps/421)。
-<a id="javadoc"></a>
+
 
 ## 7 Javadoc {#s7-javadoc}
 
@@ -765,16 +815,18 @@ public int method(String p1) { ... }
 ```
 
 基本形式始终可以使用。当整个 Javadoc 块（包括注释标记）能放在单行时，可以用单行形式替代。注意，只有在没有 `@param` 等块标签时，才适用单行形式。
+
 #### 7.1.2 段落 {#s7.1.2-javadoc-paragraphs}
 
 各段之间须有一个空行——即一行仅含对齐前导星号（`*`）；如有块标签组，其前也须有一个空行。除第一段外，每段的第一个单词前紧接 `<p>` 标签，`<p>` 后不加空格。其他块级 HTML 元素（如 `<ul>` 或 `<table>`）前*不*加 `<p>`。
 
-<a id="s7.1.3-javadoc-at-clauses"></a>
-<a id="s7.1.3-javadoc-at-clauses"></a>
+
+
 
 #### 7.1.3 块标签 {#s7.1.3-javadoc-block-tags}
 
 所用的标准"块标签"按以下顺序出现：`@param`、`@return`、`@throws`、`@deprecated`，且这四种标签的描述不能为空。当块标签在单行内放不下时，续行从 `@` 的位置向右缩进四个（或更多）空格。
+
 ### 7.2 摘要片段 {#s7.2-summary-fragment}
 
 每个 Javadoc 块都以一段简短的**摘要片段**开头。这个片段非常重要：在类和方法索引等特定上下文中，它是唯一会显示的文本内容。
@@ -783,7 +835,7 @@ public int method(String p1) { ... }
 
 > **提示：** 常见错误是将简单的 Javadoc 写成 `/** @return the customer ID */` 这种形式。这是不正确的，应改为 `/** Returns the customer ID. */` 或 `/** {@return the customer ID} */`。
 
-<a id="s7.3.3-javadoc-optional"></a>
+
 ### 7.3 Javadoc 的使用范围 {#s7.3-javadoc-where-required}
 
 至少，每个*可见的*类、成员或记录类组件都需要有 Javadoc，但有以下例外。顶层类若为 `public`，则是可见的；成员若为 `public` 或 `protected`，且其所在类可见，则该成员是可见的；记录类组件若其所在记录类可见，则该组件是可见的。
@@ -795,9 +847,11 @@ public int method(String p1) { ... }
 对于"简单、显而易见"的成员和记录类组件，例如 `getFoo()` 方法，*如果*确实没有什么值得说的，只是"返回 foo 的值"，则 Javadoc 是可选的。
 
 > **重要：** 不能以此例外为由省略普通读者可能需要了解的相关信息。例如，对于名为 `canonicalName` 的记录类组件，如果普通读者可能不知道"canonical name"（规范名称）是什么意思，就不应省略其文档（即便文档内容可能只是 `@param canonicalName the canonical name`）。
+
 #### 7.3.2 例外：重写方法 {#s7.3.2-javadoc-exception-overrides}
 
 重写父类型方法的方法，并不总是需要 Javadoc。
+
 #### 7.3.4 非必需 Javadoc {#s7.3.4-javadoc-non-required}
 
 其他类、成员和记录类组件可以根据需要或意愿编写 Javadoc。

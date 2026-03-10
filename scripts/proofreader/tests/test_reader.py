@@ -113,6 +113,77 @@ def test_extract_html_nested_lists_preserved():
     assert "6 Next" not in text
 
 
+def test_extract_html_standalone_anchors_stripped():
+    """Standalone <a id="..."></a> anchors (legacy in-doc nav) are removed.
+
+    These appear frequently in Google style guide HTML around headings and
+    cause Claude to reproduce them in markdown corrections.
+    """
+    html = (
+        "<h2>7 Switch</h2>"
+        "<p>See switch rules.</p>"
+        '\n\n<a id="fallthrough"></a>\n'
+        "<h3>7.1 Fall-through</h3>"
+        "<p>Always comment fall-through.</p>"
+        '\n<a id="default-case"></a>\n'
+        "<h3>7.2 Default case</h3>"
+        "<p>Always include default.</p>"
+        "<h2>8 Next</h2>"
+    )
+    text, _ = reader_mod._extract_from_html(html, "7")
+    # Standalone anchors stripped
+    assert '<a id="fallthrough">' not in text
+    assert '<a id="default-case">' not in text
+    # Section content preserved
+    assert "See switch rules" in text
+    assert "Always comment fall-through" in text
+    assert "Always include default" in text
+    # Next section excluded
+    assert "8 Next" not in text
+
+
+def test_extract_html_href_links_preserved():
+    """Non-empty <a href="..."> hyperlinks are kept intact."""
+    html = (
+        "<h2>9 References</h2>"
+        '<p>See <a href="https://example.com">the spec</a> for details.</p>'
+        '<p>Also <a href="#s4.5-line-wrapping">line wrapping rules</a>.</p>'
+        "<h2>10 Next</h2>"
+    )
+    text, _ = reader_mod._extract_from_html(html, "9")
+    # href links with content preserved
+    assert '<a href="https://example.com">the spec</a>' in text
+    assert '<a href="#s4.5-line-wrapping">line wrapping rules</a>' in text
+    assert "10 Next" not in text
+
+
+def test_extract_html_mixed_anchors():
+    """Standalone anchors stripped; href links with text content kept."""
+    html = (
+        "<h2>11 Mixed</h2>"
+        '\n<a id="constants"></a>\n'
+        "<p>Constants are "
+        '<a href="#s5.2.4-constant-names">named in UPPER_SNAKE_CASE</a>.'
+        "</p>"
+        '\n<a id="acronyms"></a>'
+        '\n<a id="camelcase"></a>\n'
+        "<h3>11.1 CamelCase</h3>"
+        "<p>Defined here.</p>"
+        "<h2>12 Next</h2>"
+    )
+    text, _ = reader_mod._extract_from_html(html, "11")
+    # Standalone anchors gone
+    assert '<a id="constants">' not in text
+    assert '<a id="acronyms">' not in text
+    assert '<a id="camelcase">' not in text
+    # Hyperlink with text preserved
+    assert '<a href="#s5.2.4-constant-names">named in UPPER_SNAKE_CASE</a>' in text
+    # Content preserved
+    assert "Constants are" in text
+    assert "Defined here" in text
+    assert "12 Next" not in text
+
+
 def test_extract_html_section_boundary():
     """Extraction stops at the next same-level heading."""
     text, _ = reader_mod._extract_from_html(_SAMPLE_HTML, "1")
