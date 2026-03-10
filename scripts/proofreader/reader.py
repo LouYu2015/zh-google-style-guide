@@ -1,24 +1,28 @@
 """
-reader.py - 文档读取（自包含，不依赖上级目录的其他脚本）
+reader.py - Self-contained HTML/Markdown section reader and writer.
 
-支持：
-- HTML 格式原文（cppguide.html, javaguide.html 等）
-- Markdown 格式原文（pyguide.md, shellguide.md 等）
-- Markdown 格式译文（docs/guides/*.md）
+Supports reading from original English styleguide files (HTML and MD)
+and reading/writing translated Markdown files.
+
+HTML originals are returned as raw HTML so Claude can interpret the markup
+directly (lists, formatting, etc.) without lossy text conversion.
+
+This module is intentionally self-contained (no imports from sibling scripts/).
 """
+from __future__ import annotations
 
 import html as _html_lib
 import re
-from dataclasses import dataclass
-from html.parser import HTMLParser
 from pathlib import Path
-from typing import Optional
+from state import SectionInfo
 
-# 本脚本所在目录的上两级为项目根目录
+# ──────────────────────────────────────────────
+# Guide mappings
+# ──────────────────────────────────────────────
+
 REPO_ROOT = Path(__file__).parent.parent.parent
 
-# 指南名 -> 原始源文件列表（按优先级排列）
-ORIGINAL_SOURCES: dict[str, list[str]] = {
+ORIGINAL_GUIDES: dict[str, list[str]] = {
     "cpp":        ["styleguide/cppguide.html"],
     "python":     ["styleguide/pyguide.md"],
     "javascript": ["styleguide/jsguide.html"],
@@ -31,8 +35,7 @@ ORIGINAL_SOURCES: dict[str, list[str]] = {
     "html-css":   ["styleguide/htmlcssguide.html"],
 }
 
-# 指南名 -> 译文文件路径
-TRANSLATED_PATHS: dict[str, str] = {
+TRANSLATION_GUIDES: dict[str, str] = {
     "cpp":        "docs/guides/cpp.md",
     "python":     "docs/guides/python.md",
     "javascript": "docs/guides/javascript.md",
@@ -43,98 +46,32 @@ TRANSLATED_PATHS: dict[str, str] = {
     "html-css":   "docs/guides/html-css.md",
 }
 
-SUPPORTED_GUIDES = list(ORIGINAL_SOURCES.keys())
-
-
-@dataclass
-class SectionInfo:
-    num: str          # 章节号，如 "4.5.1"
-    title: str        # 完整标题，如 "4.5.1 Where to break"
-    level: int        # 标题层级（2 = h2/##，3 = h3/### ...）
-    token_estimate: int
-    has_translation: bool
-    source_file: str  # 原文来自哪个文件
-
-
-# ─────────────────────────────────────────────────────────
-# Token 估算（无需 API 调用）
-# ─────────────────────────────────────────────────────────
-
-def estimate_tokens(text: str) -> int:
-    """粗估文本的 token 数（中文约 2 char/token，英文约 4 char/token）。"""
-    if not text:
-        return 0
-    zh_count = sum(1 for c in text if "\u4e00" <= c <= "\u9fff")
-    other_count = len(text) - zh_count
-    return zh_count // 2 + other_count // 4
-
-
-# ─────────────────────────────────────────────────────────
-# HTML 提取
-# ─────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
+# HTML helpers
+# ──────────────────────────────────────────────
 
 def _strip_tags(s: str) -> str:
     return re.sub(r"<[^>]+>", "", s)
-
-
-def _html_to_text(fragment: str) -> str:
-    """将 HTML 片段转换为带基本格式的纯文本，保留代码块。"""
-    code_blocks: list[str] = []
-
-    def save_pre(m: re.Match) -> str:
-        inner = _strip_tags(m.group(1))
-        inner = _html_lib.unescape(inner)
-        code_blocks.append(inner)
-        return f"\x00CODE{len(code_blocks) - 1}\x00"
-
-    text = re.sub(r"<pre[^>]*>(.*?)</pre>", save_pre,
-                  fragment, flags=re.IGNORECASE | re.DOTALL)
-    text = re.sub(r"<li[^>]*>", "\n- ", text, flags=re.IGNORECASE)
-    text = re.sub(
-        r"</?(?:p|div|blockquote|tr|dt|dd|ul|ol)[^>]*>",
-        "\n", text, flags=re.IGNORECASE,
-    )
-    text = re.sub(r"<t[dh][^>]*>", "\t", text, flags=re.IGNORECASE)
-    text = re.sub(r"<code[^>]*>(.*?)</code>", r"`\1`",
-                  text, flags=re.IGNORECASE | re.DOTALL)
-    text = re.sub(r"<(?:strong|b)[^>]*>(.*?)</(?:strong|b)>", r"**\1**",
-                  text, flags=re.IGNORECASE | re.DOTALL)
-    text = re.sub(r"<(?:em|i)[^>]*>(.*?)</(?:em|i)>", r"*\1*",
-                  text, flags=re.IGNORECASE | re.DOTALL)
-    text = re.sub(r"<[^>]+>", "", text)
-
-    for i, code in enumerate(code_blocks):
-        text = text.replace(f"\x00CODE{i}\x00", f"\n```\n{code.strip()}\n```")
-
-    text = _html_lib.unescape(text)
-    lines = [line.rstrip() for line in text.splitlines()]
-    result: list[str] = []
-    blank_run = 0
-    for line in lines:
-        if line == "":
-            blank_run += 1
-            if blank_run <= 1:
-                result.append(line)
-        else:
-            blank_run = 0
-            result.append(line)
-    return "\n".join(result).strip()
 
 
 def _heading_level_for_section(section_num: str) -> int:
     return section_num.count(".") + 2
 
 
-def extract_from_html(content: str, section_num: str) -> tuple[Optional[str], Optional[str]]:
-    """从 HTML 中提取指定序号的章节，返回 (可读文本, 标题)。"""
+def _extract_from_html(content: str, section_num: str) -> tuple[str, str] | tuple[None, None]:
+    """Extract a section from HTML, returning the raw HTML fragment and title.
+
+    The raw HTML is returned as-is so Claude can read <ol>, <ul>, <code>, etc.
+    directly without lossy conversion.
+    """
     level = _heading_level_for_section(section_num)
     heading_re = re.compile(
         rf"<h{level}[^>]*>(.*?)</h{level}>",
         re.IGNORECASE | re.DOTALL,
     )
 
-    target_pos: Optional[int] = None
-    target_title = ""
+    target_pos: int | None = None
+    target_title: str = ""
     for m in heading_re.finditer(content):
         raw = _strip_tags(m.group(1)).strip()
         heading_text = _html_lib.unescape(raw)
@@ -152,29 +89,33 @@ def extract_from_html(content: str, section_num: str) -> tuple[Optional[str], Op
     if len(matches) >= 2:
         fragment = fragment[: matches[1].start()]
 
-    return _html_to_text(fragment), target_title
+    return fragment.strip(), target_title
 
 
-# ─────────────────────────────────────────────────────────
-# Markdown 提取
-# ─────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
+# Markdown helpers
+# ──────────────────────────────────────────────
 
-def _strip_md_frontmatter(content: str) -> str:
+def _strip_md_frontmatter(content: str) -> tuple[str, int]:
+    """Remove YAML front matter. Returns (content_without_fm, fm_line_count)."""
     if content.startswith("---"):
         end = content.find("\n---", 3)
         if end != -1:
-            return content[end + 4:]
-    return content
+            fm_end = end + 4
+            if fm_end < len(content) and content[fm_end] == "\n":
+                fm_end += 1
+            fm_lines = content[:fm_end].count("\n")
+            return content[fm_end:], fm_lines
+    return content, 0
 
 
-def extract_from_md(content: str, section_num: str) -> tuple[Optional[str], Optional[str]]:
-    """从 Markdown 中提取指定序号的章节，返回 (Markdown 文本, 标题)。"""
-    content = _strip_md_frontmatter(content)
-    lines = content.splitlines(keepends=True)
+def _extract_from_md(content: str, section_num: str) -> tuple[str, str] | tuple[None, None]:
+    content_body, _ = _strip_md_frontmatter(content)
+    lines = content_body.splitlines(keepends=True)
 
-    target_line: Optional[int] = None
-    target_level: Optional[int] = None
-    target_title = ""
+    target_line: int | None = None
+    target_level: int | None = None
+    target_title: str = ""
 
     for i, line in enumerate(lines):
         m = re.match(r"^(#{1,6})\s+(.+)", line)
@@ -201,220 +142,206 @@ def extract_from_md(content: str, section_num: str) -> tuple[Optional[str], Opti
     return "".join(result_lines).strip(), target_title
 
 
-# ─────────────────────────────────────────────────────────
-# HTML 章节列表解析
-# ─────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────
+# Section listing
+# ──────────────────────────────────────────────
 
-class _HtmlHeadingParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.sections: list[tuple[int, str, int]] = []  # (level, title, char_count)
-        self._in_heading = False
-        self._heading_level = 0
-        self._heading_buf: list[str] = []
-        self._code_depth = 0
-        self._current: Optional[list] = None
-        self._section_buf: list[str] = []
+def _list_sections_html(content: str) -> list[dict]:
+    """Extract all numbered sections from HTML content with extent info."""
+    heading_re = re.compile(r"<h([2-5])[^>]*>(.*?)</h\1>", re.IGNORECASE | re.DOTALL)
 
-    def handle_starttag(self, tag, attrs):
-        if tag in ("pre", "code"):
-            self._code_depth += 1
-        if tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
-            self._in_heading = True
-            self._heading_level = int(tag[1])
-            self._heading_buf = []
+    headings = []
+    for m in heading_re.finditer(content):
+        level = int(m.group(1))
+        raw = _strip_tags(m.group(2)).strip()
+        heading_text = _html_lib.unescape(raw)
+        num_match = re.match(r"^(\d+(?:\.\d+)*)\b", heading_text)
+        if num_match:
+            headings.append({
+                "pos": m.start(),
+                "level": level,
+                "section_num": num_match.group(1),
+                "title": heading_text,
+            })
 
-    def handle_endtag(self, tag):
-        if tag in ("pre", "code"):
-            self._code_depth = max(0, self._code_depth - 1)
-        if tag in ("h1", "h2", "h3", "h4", "h5", "h6") and self._in_heading:
-            title = "".join(self._heading_buf).strip()
-            if self._current is not None:
-                self._current[2] = len("".join(self._section_buf))
-                self.sections.append(tuple(self._current))  # type: ignore[arg-type]
-            self._current = [int(tag[1]), title, 0]
-            self._section_buf = []
-            self._in_heading = False
-
-    def handle_data(self, data):
-        if self._in_heading:
-            self._heading_buf.append(data)
-        elif self._code_depth == 0 and self._current is not None:
-            self._section_buf.append(data)
-
-    def finalize(self):
-        if self._current is not None:
-            self._current[2] = len("".join(self._section_buf))
-            self.sections.append(tuple(self._current))  # type: ignore[arg-type]
-
-
-def _parse_html_sections(content: str) -> list[tuple[int, str, int]]:
-    p = _HtmlHeadingParser()
-    p.feed(content)
-    p.finalize()
-    return p.sections
-
-
-def _parse_md_sections(content: str) -> list[tuple[int, str, int]]:
-    content = _strip_md_frontmatter(content)
-    sections = []
-    current = None
-    section_lines = []
-    in_code = False
-
-    for line in content.splitlines():
-        if line.startswith("```") or line.startswith("~~~"):
-            in_code = not in_code
-            continue
-        if in_code:
-            continue
-        m = re.match(r"^(#{1,6})\s+(.+)$", line)
-        if m:
-            if current is not None:
-                current[2] = len(" ".join(section_lines))
-                sections.append(tuple(current))
-            current = [len(m.group(1)), m.group(2).strip(), 0]
-            section_lines = []
-        elif current is not None:
-            clean = re.sub(r"`[^`]+`", "", line)
-            section_lines.append(clean)
-
-    if current is not None:
-        current[2] = len(" ".join(section_lines))
-        sections.append(tuple(current))
-    return sections
-
-
-# ─────────────────────────────────────────────────────────
-# 公共 API
-# ─────────────────────────────────────────────────────────
-
-def _extract_section_num(title: str) -> Optional[str]:
-    """从标题中提取章节号，如 '4.5.1 Where to break' → '4.5.1'。"""
-    m = re.match(r"^(\d+(?:\.\d+)*)\s", title)
-    return m.group(1) if m else None
-
-
-def list_all_sections(guide: str) -> list[SectionInfo]:
-    """枚举指定指南的所有章节（含 token 估算和译文状态）。"""
-    if guide not in ORIGINAL_SOURCES:
-        raise ValueError(f"未知指南: '{guide}'，可用: {', '.join(SUPPORTED_GUIDES)}")
-
-    # 加载译文用于检查是否有对应翻译
-    trans_path = REPO_ROOT / TRANSLATED_PATHS[guide]
-    trans_content = trans_path.read_text(encoding="utf-8", errors="ignore") if trans_path.exists() else ""
-    is_placeholder = "翻译进行中" in trans_content
-
-    result: list[SectionInfo] = []
-    for src_path_str in ORIGINAL_SOURCES[guide]:
-        src_path = REPO_ROOT / src_path_str
-        if not src_path.exists():
-            continue
-        content = src_path.read_text(encoding="utf-8", errors="ignore")
-
-        if src_path_str.endswith(".html"):
-            raw_sections = _parse_html_sections(content)
-        else:
-            raw_sections = _parse_md_sections(content)
-
-        for level, title, char_count in raw_sections:
-            section_num = _extract_section_num(title)
-            if section_num is None:
-                continue
-            if is_placeholder:
-                has_trans = False
-            else:
-                text, _ = extract_from_md(trans_content, section_num) if trans_content else (None, None)
-                has_trans = text is not None and len(text.strip()) > 50
-
-            result.append(SectionInfo(
-                num=section_num,
-                title=title,
-                level=level,
-                token_estimate=estimate_tokens(content[: char_count + 1]),  # rough
-                has_translation=has_trans,
-                source_file=src_path_str,
-            ))
-
+    result = []
+    for i, h in enumerate(headings):
+        end_pos = len(content)
+        for j in range(i + 1, len(headings)):
+            if headings[j]["level"] <= h["level"]:
+                end_pos = headings[j]["pos"]
+                break
+        token_estimate = max(len(content[h["pos"]:end_pos]) // 6, 10)
+        result.append({
+            "section_num": h["section_num"],
+            "title": h["title"],
+            "level": h["level"],
+            "token_estimate": token_estimate,
+        })
     return result
 
 
-def read_original_section(guide: str, section_num: str) -> Optional[str]:
-    """提取指定章节的英文原文。"""
-    for src_path_str in ORIGINAL_SOURCES.get(guide, []):
-        path = REPO_ROOT / src_path_str
+def _list_sections_md(content: str) -> list[dict]:
+    """Extract all numbered sections from Markdown content with extent info."""
+    content_body, _ = _strip_md_frontmatter(content)
+    lines = content_body.splitlines(keepends=True)
+
+    headings = []
+    for i, line in enumerate(lines):
+        m = re.match(r"^(#{1,6})\s+(.+)", line)
+        if m:
+            hashes = m.group(1)
+            raw_title = m.group(2).strip()
+            clean_title = re.sub(r"\s*\{#[^}]+\}", "", raw_title).strip()
+            num_match = re.match(r"^(\d+(?:\.\d+)*)\b", clean_title)
+            if num_match:
+                headings.append({
+                    "line": i,
+                    "level": len(hashes),
+                    "section_num": num_match.group(1),
+                    "title": clean_title,
+                })
+
+    result = []
+    for i, h in enumerate(headings):
+        end_line = len(lines)
+        for j in range(i + 1, len(headings)):
+            if headings[j]["level"] <= h["level"]:
+                end_line = headings[j]["line"]
+                break
+        section_text = "".join(lines[h["line"]:end_line])
+        token_estimate = max(len(section_text) // 4, 10)
+        result.append({
+            "section_num": h["section_num"],
+            "title": h["title"],
+            "level": h["level"],
+            "token_estimate": token_estimate,
+        })
+    return result
+
+
+# ──────────────────────────────────────────────
+# Public API
+# ──────────────────────────────────────────────
+
+def list_all_sections(guide: str) -> list[SectionInfo]:
+    """List all numbered sections from the original English guide."""
+    raw_sections: list[dict] = []
+
+    for src_path in ORIGINAL_GUIDES.get(guide, []):
+        path = REPO_ROOT / src_path
         if not path.exists():
             continue
         content = path.read_text(encoding="utf-8", errors="ignore")
-        if src_path_str.endswith(".html"):
-            text, _ = extract_from_html(content, section_num)
+        if src_path.endswith(".html"):
+            raw_sections.extend(_list_sections_html(content))
         else:
-            text, _ = extract_from_md(content, section_num)
-        if text:
+            raw_sections.extend(_list_sections_md(content))
+
+    # Find which sections have translations
+    translation_path = REPO_ROOT / TRANSLATION_GUIDES.get(guide, "")
+    translated_nums: set[str] = set()
+    if translation_path.exists():
+        trans_content = translation_path.read_text(encoding="utf-8", errors="ignore")
+        for line in trans_content.splitlines():
+            m = re.match(r"^#{1,6}\s+(\d+(?:\.\d+)*)\s", line)
+            if m:
+                translated_nums.add(m.group(1))
+
+    return [
+        SectionInfo(
+            section_num=s["section_num"],
+            title=s["title"],
+            level=s["level"],
+            token_estimate=s["token_estimate"],
+            has_translation=s["section_num"] in translated_nums,
+        )
+        for s in raw_sections
+    ]
+
+
+def read_original_section(guide: str, section_num: str) -> str | None:
+    """Read a section from the English original.
+
+    Returns raw HTML for .html guides, raw Markdown for .md guides.
+    """
+    for src_path in ORIGINAL_GUIDES.get(guide, []):
+        path = REPO_ROOT / src_path
+        if not path.exists():
+            continue
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        if src_path.endswith(".html"):
+            text, _ = _extract_from_html(content, section_num)
+        else:
+            text, _ = _extract_from_md(content, section_num)
+        if text is not None:
             return text
     return None
 
 
-def read_translated_section(guide: str, section_num: str) -> Optional[str]:
-    """提取指定章节的中文译文，若不存在返回 None。"""
-    path = REPO_ROOT / TRANSLATED_PATHS.get(guide, "")
-    if not path or not path.exists():
+def read_translated_section(guide: str, section_num: str) -> str | None:
+    """Read a section from the Chinese translation, returning Markdown text."""
+    translation_path = REPO_ROOT / TRANSLATION_GUIDES.get(guide, "")
+    if not translation_path.exists():
         return None
-    content = path.read_text(encoding="utf-8", errors="ignore")
-    text, _ = extract_from_md(content, section_num)
+    content = translation_path.read_text(encoding="utf-8", errors="ignore")
+    text, _ = _extract_from_md(content, section_num)
     return text
 
 
-def write_section(guide: str, section_num: str, corrected_content: str) -> int:
-    """将修正后内容写回译文文件，替换对应章节，返回替换的行数差。
+def apply_correction(guide: str, section_num: str, corrected_content: str) -> bool:
+    """Replace a section in the translation file with corrected_content.
 
-    查找对应章节的起止行，整体替换。
+    The corrected_content should be the full section text starting with the
+    heading line (e.g. '### 1.1 术语说明\n\n...').
+
+    Returns True on success, False if section not found.
     """
-    path = REPO_ROOT / TRANSLATED_PATHS.get(guide, "")
-    if not path or not path.exists():
-        raise FileNotFoundError(f"译文文件不存在：{path}")
+    translation_path = REPO_ROOT / TRANSLATION_GUIDES.get(guide, "")
+    if not translation_path.exists():
+        return False
 
-    content = path.read_text(encoding="utf-8", errors="ignore")
-    body = _strip_md_frontmatter(content)
-    # 计算 frontmatter 的长度
-    fm_len = len(content) - len(body)
-    fm = content[:fm_len]
+    full_content = translation_path.read_text(encoding="utf-8")
+    lines = full_content.splitlines(keepends=True)
 
-    lines = body.splitlines(keepends=True)
+    # Find frontmatter end
+    fm_end_line = 0
+    if full_content.startswith("---"):
+        for i, line in enumerate(lines[1:], start=1):
+            if line.rstrip() == "---":
+                fm_end_line = i + 1
+                break
 
-    target_line: Optional[int] = None
-    target_level: Optional[int] = None
+    # Find target section start
+    target_line: int | None = None
+    target_level: int | None = None
 
-    for i, line in enumerate(lines):
+    for i, line in enumerate(lines[fm_end_line:], start=fm_end_line):
         m = re.match(r"^(#{1,6})\s+(.+)", line)
         if m:
+            hashes = m.group(1)
             raw_title = m.group(2).strip()
             clean_title = re.sub(r"\s*\{#[^}]+\}", "", raw_title).strip()
             if re.match(rf"^{re.escape(section_num)}(?:\s|$)", clean_title):
                 target_line = i
-                target_level = len(m.group(1))
+                target_level = len(hashes)
                 break
 
     if target_line is None:
-        raise ValueError(f"章节 '{section_num}' 未在译文文件中找到")
+        return False
 
+    # Find section end (next heading at same or higher level)
     end_line = len(lines)
-    for i, line in enumerate(lines[target_line + 1:], start=target_line + 1):
-        m = re.match(r"^(#{1,6})\s", line)
+    for i in range(target_line + 1, len(lines)):
+        m = re.match(r"^(#{1,6})\s", lines[i])
         if m and len(m.group(1)) <= target_level:  # type: ignore[operator]
             end_line = i
             break
 
-    old_count = end_line - target_line
-    new_lines = (corrected_content.rstrip("\n") + "\n").splitlines(keepends=True)
-    lines[target_line:end_line] = new_lines
-    new_body = "".join(lines)
-    path.write_text(fm + new_body, encoding="utf-8")
-    return len(new_lines) - old_count
+    # Build the replacement: ensure it ends with exactly one newline
+    new_section = corrected_content.rstrip("\n") + "\n"
 
-
-def is_placeholder(guide: str) -> bool:
-    path = REPO_ROOT / TRANSLATED_PATHS.get(guide, "")
-    if not path or not path.exists():
-        return True
-    return "翻译进行中" in path.read_text(encoding="utf-8", errors="ignore")
+    # Reassemble file
+    new_lines = lines[:target_line] + [new_section] + lines[end_line:]
+    translation_path.write_text("".join(new_lines), encoding="utf-8")
+    return True

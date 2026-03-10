@@ -1,46 +1,53 @@
 """
-config.py - API Key 管理
+config.py - API key management and global configuration.
 
-查找顺序：
-1. 环境变量 ANTHROPIC_API_KEY
-2. scripts/proofreader/.api_key（项目目录，已加入 .gitignore，权限 600）
-3. 交互式提示用户输入 → 询问是否保存
+Priority for API key: env ANTHROPIC_API_KEY → ~/.config/proofreader/api_key → prompt+save
 """
-
 import os
-import stat
+import sys
 from pathlib import Path
-
-# API Key 存放在本脚本同目录下的 .api_key 文件（已 gitignore）
-_KEY_FILE = Path(__file__).parent / ".api_key"
 
 MODEL = "claude-sonnet-4-6"
 
+_CONFIG_DIR = Path.home() / ".config" / "proofreader"
+_API_KEY_FILE = _CONFIG_DIR / "api_key"
+
 
 def get_api_key() -> str:
-    # 1. 环境变量
+    """Return the Anthropic API key, prompting the user if not found."""
+    # 1. Environment variable
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if key:
         return key
 
-    # 2. 项目目录配置文件
-    if _KEY_FILE.exists():
-        key = _KEY_FILE.read_text().strip()
+    # 2. Config file
+    if _API_KEY_FILE.exists():
+        key = _API_KEY_FILE.read_text(encoding="utf-8").strip()
         if key:
             return key
 
-    # 3. 交互式输入
-    print("\n未找到 Anthropic API Key。")
-    print("请输入你的 API Key（输入后不会显示）：")
-    import getpass
-    key = getpass.getpass("API Key: ").strip()
-    if not key:
-        raise RuntimeError("未提供 API Key，程序退出。")
+    # 3. Prompt user
+    print("未找到 Anthropic API Key。")
+    try:
+        key = input("请输入你的 Anthropic API Key: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print("\n已取消。", file=sys.stderr)
+        sys.exit(1)
 
-    save = input(f"是否将 API Key 保存到 {_KEY_FILE}（下次无需重新输入）？[y/N] ").strip().lower()
+    if not key:
+        print("未提供 API Key，退出。", file=sys.stderr)
+        sys.exit(1)
+
+    # Optionally save
+    try:
+        save = input("是否保存 API Key 以便下次使用？[y/N] ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        save = "n"
+
     if save == "y":
-        _KEY_FILE.write_text(key)
-        _KEY_FILE.chmod(stat.S_IRUSR | stat.S_IWUSR)  # 600
-        print(f"已保存到 {_KEY_FILE}")
+        _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        _API_KEY_FILE.write_text(key, encoding="utf-8")
+        _API_KEY_FILE.chmod(0o600)
+        print(f"API Key 已保存至 {_API_KEY_FILE}")
 
     return key
